@@ -10,6 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
     <style>
+        .row {
+            display: flex;
+            align-items: center;
+        }
+
         /* Aumentar el ancho del logo sin que se deforme */
         .navbar-brand img {
             width: 120px;
@@ -22,7 +27,137 @@
         }
         /* Gráficas en tema oscuro */
         canvas {
-    background-color: transparent; /* Asegúrate de que el fondo del canvas sea transparente */
+            background-color: transparent; /* Asegúrate de que el fondo del canvas sea transparente */
+        }
+
+        .tooltip-container {
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            background-color: #555;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            position: absolute;
+            top: 50%;
+            left: 100%; /* Coloca el tooltip inmediatamente a la derecha del "?" */
+            transform: translateY(-50%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap; /* Evita el ajuste en varias líneas */
+            box-sizing: border-box;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-container .circle {
+            width: 20px;
+            height: 20px;
+            background-color: #747474;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Ajuste dinámico cuando el contenedor está cerca del borde derecho */
+        .tooltip-container.right .tooltip-text {
+            left: 0;
+            right: auto;
+            transform: translateX(50);
+        }
+
+        @media (max-width: 576px) {
+            .tooltip-container {
+                margin-right: 15px; /* Menos margen en pantallas más pequeñas */
+            }
+        }
+
+        /* Estilo de la barra inferior */
+        .footer-bar {
+            display: flex;
+            align-items: center;
+            background-color: #272727; /* Color de fondo gris claro */
+            padding: 10px; /* Espaciado interno */
+            margin-top: 30px; /* Margen superior para separar del contenido */
+        }
+
+        /* Estilo del icono de información */
+        .info-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #c2c2c2;
+            color: rgb(41, 41, 41);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 5px; /* Espacio entre el icono y el texto */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el icono */
+        }
+
+        /* Estilo del logo de Discord */
+        .discord-logo {
+            margin-left: auto; /* Empuja el logo a la derecha */
+            width: 24px; /* Ancho del logo */
+            height: 24px; /* Alto del logo */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el logo */
+        }
+
+        /* Estilo del popup */
+        .popup {
+            display: none; /* Inicialmente oculto */
+            position: fixed; /* Fijo en la pantalla */
+            left: 50%; /* Centrado horizontalmente */
+            top: 50%; /* Centrado verticalmente */
+            transform: translate(-50%, -50%); /* Ajustar para centrar */
+            background-color: rgb(58, 58, 58); /* Fondo blanco */
+            border: 1px solid #808080; /* Borde gris */
+            border-radius: 8px; /* Esquinas redondeadas */
+            padding: 20px; /* Espaciado interno */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra */
+            z-index: 1000; /* Asegura que esté por encima */
+        }
+
+        /* Estilo del fondo oscuro del popup */
+        .overlay {
+            display: none; /* Inicialmente oculto */
+            position: fixed; /* Fijo en la pantalla */
+            top: 0; /* Parte superior */
+            left: 0; /* Parte izquierda */
+            width: 100%; /* Ancho completo */
+            height: 100%; /* Alto completo */
+            background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro con opacidad */
+            z-index: 999; /* Justo debajo del popup */
+        }
+
+        /* Botón de cierre del popup */
+        .close-button {
+            display: block;
+            margin: 0 auto; /* Centra el botón */
+            padding: 10px 15px; /* Espaciado interno */
+            background-color: #4b4b4b; /* Fondo azul */
+            color: white; /* Texto blanco */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Esquinas redondeadas */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+        }
+
+        /* Estilo para el texto de disclaimer */
+        .disclaimer-text {
+            color: rgb(255, 255, 255); /* Color del texto a negro */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el texto */
         }
 
     </style>
@@ -54,11 +189,9 @@
 
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="info.html">Info</a>
-                    </li>
-                    
+                    </li>  
                 </ul>
             </div>
-            
         </div>
     </nav>
 
@@ -68,10 +201,18 @@
         <div class="row">
             <!-- Gráfico de Tintas Jugadas -->
             <div class="col-md-6">
+                <span class="tooltip-container">
+                    <span class="circle">?</span>
+                    <span class="tooltip-text">Top 24 popular decks</span>
+                </span>
                 <canvas id="inksChartPopular" width="400" height="200"></canvas>
             </div>
             <!-- Gráfico de Cartas Más Jugadas -->
             <div class="col-md-6">
+                <span class="tooltip-container">
+                    <span class="circle">?</span>
+                    <span class="tooltip-text">Most played cards on top 24 popular decks</span>
+                </span>
                 <canvas id="cartasChartPopular" width="400" height="200"></canvas>
             </div>
         </div>
@@ -80,10 +221,18 @@
         <div class="row">
             <!-- Gráfico de Tintas Jugadas -->
             <div class="col-md-6">
+                <span class="tooltip-container">
+                    <span class="circle">?</span>
+                    <span class="tooltip-text">Top 24 trending decks</span>
+                </span>
                 <canvas id="inksChartTrending" width="400" height="200"></canvas>
             </div>
             <!-- Gráfico de Cartas Más Jugadas -->
             <div class="col-md-6">
+                <span class="tooltip-container">
+                    <span class="circle">?</span>
+                    <span class="tooltip-text">Most played cards on top 24 trending decks</span>
+                </span>
                 <canvas id="cartasChartTrending" width="400" height="200"></canvas>
             </div>
         </div>
@@ -92,15 +241,33 @@
         <div class="row">
             <!-- Gráfico de Tintas Jugadas -->
             <div class="col-md-6">
+                <span class="tooltip-container">
+                    <span class="circle">?</span>
+                    <span class="tooltip-text">Most played decks on Top 24 popular decks</span>
+                </span>
                 <canvas id="decksChartPopular"></canvas>
             </div>
             <!-- Gráfico de Tintas Jugadas -->
             <div class="col-md-6">
+                <span class="tooltip-container">
+                    <span class="circle">?</span>
+                    <span class="tooltip-text">Most played decks on Top 24 trending decks</span>
+                </span>
                 <canvas id="decksChartTrending"></canvas>
             </div>
         </div><br><br>
         <div class="row">
-            <h2>Evolution Decks</h2>
+            <div class="col-md-6 d-flex align-items-center">
+                <div class="col-md-1">
+                    <span class="tooltip-container">
+                        <span class="circle">?</span>
+                        <span class="tooltip-text">Comparison with last week</span>
+                    </span>
+                </div>
+                <div class="col-md-6">
+                    <h2>Evolution Decks</h2>
+                </div>
+            </div>
             <!-- Gráfico de Tintas Jugadas -->
             <div class="col-md-12"><br>
                 <div id="decksEvolution"></div>
@@ -110,7 +277,6 @@
         <div id="data-date" style="text-align: right; color: #949494; margin-top: 20px; padding-right: 20px;">
             Data date: <span id="date-span"></span>
         </div>
-        <br><br><br><br> 
         
     </div>
 
@@ -118,9 +284,45 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="script.js"></script>
+
+    
+    <!-- Barra inferior con descargo de responsabilidad -->
+    <div class="footer-bar">
+        <span class="info-icon">i</span> <!-- Icono de información -->
+        <span class="disclaimer-text" onclick="showPopup()">Disclaimer</span> <!-- Texto de descargo de responsabilidad -->
+        <img class="discord-logo" src="https://cdn.freebiesupply.com/logos/large/2x/discord-logo-png-transparent.png" alt="Discord Logo" onclick="window.open('https://discord.gg/', '_blank')"> <!-- Logo de Discord -->
+    </div>
+
+    <!-- Overlay para el popup -->
+    <div class="overlay" id="overlay" onclick="hidePopup()"></div>
+
+    <!-- Popup -->
+    <div class="popup" id="popup">
+        <p class="disclaimer-text">
+            This website uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under 
+            <a href="https://cdn.ravensburger.com/lorcana/community-code-en" target="_blank" class="underline">Ravensburger’s Community Code Policy</a>
+            . We are expressly prohibited from charging you to use or access this content. This website is not published, endorsed, or specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit 
+            <a href="https://www.disneylorcana.com/" target="_blank" class="underline">https://www.disneylorcana.com/</a>
+        </p>
+        <button class="close-button" onclick="hidePopup()">Close</button>
+    </div>
+
 </body>
 <!--
 <footer style="background-color: #333; color: #ffffff; text-align: center; padding: 10px 0; position: fixed; width: 100%; bottom: 0;">
     © 2024 Mi Sitio Web - Todos los derechos reservados.
 </footer> -->
 </html>
+
+
+<script>
+    function showPopup() {
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('popup').style.display = 'block';
+    }
+
+    function hidePopup() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('popup').style.display = 'none';
+    }
+</script>
